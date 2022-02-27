@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: publish
+
+on:
+  push:
+    paths-ignore:
+      - 'images/**'
+      - 'src/images/**'
+      - 'README.md'
+    branches: [ master ]
+  pull_request:
+    paths-ignore:
+      - 'images/**'
+      - 'src/images/**'
+      - 'README.md'
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_NOLOGO: 1
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_MULTILEVEL_LOOKUP: 1
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+
+    - name: Setup .NET 6 SDK
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+
+    - name: Restore
+      run: dotnet restore --disable-parallel -p:Configuration=Release
+
+    #- name: Build
+    #  run: dotnet build -c Release --no-restore
+
+    - name: Publish
+      run: dotnet publish -c Release --self-contained -r linux-x64 --nologo --verbosity normal -o ./artifacts/
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: published
+        path: ./artifacts/
